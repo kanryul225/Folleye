@@ -153,6 +153,8 @@ class OnboardingWindow:
             v.removeFromSuperview()
 
     def _show(self):
+        from Cocoa import NSApplication
+        NSApplication.sharedApplication().activateIgnoringOtherApps_(True)
         self._win.makeKeyAndOrderFront_(None)
         self._win.orderFrontRegardless()
 
@@ -273,8 +275,11 @@ class OnboardingWindow:
 
     def _run_calibration(self):
         self._win.orderOut_(None)
-        if self._on_calibrate:
-            self._on_calibrate()
+        try:
+            if self._on_calibrate:
+                self._on_calibrate()
+        except Exception as e:
+            print(f"[Folleye] 캘리브레이션 오류: {e}", flush=True)
         self.show_complete()
 
     def _run_start_tracking(self):

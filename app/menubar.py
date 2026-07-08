@@ -21,7 +21,7 @@ WINDOW_REFRESH_SECONDS = 1.0
 MOUSE_IDLE_SECONDS = 1.5
 MOUSE_MOVE_THRESHOLD = 5
 
-CALIB_PATH = "calibration.json"
+CALIB_PATH = str(pathlib.Path.home() / ".folleye_calibration.json")
 
 
 class _AppDelegate(NSObject):
