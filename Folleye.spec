@@ -65,6 +65,7 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='Folleye.app',
+    icon='image/Folleye.icns',
     bundle_identifier='com.kanryul225.folleye',
     version='1.0.0',
     info_plist={
