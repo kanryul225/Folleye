@@ -4,17 +4,40 @@ from Cocoa import (
     NSWindow, NSView, NSTextField, NSButton, NSColor, NSFont,
     NSScreen, NSBackingStoreBuffered, NSMakeRect,
     NSTextAlignmentCenter, NSTextAlignmentLeft,
-    NSObject, NSImage, NSImageView,
+    NSObject, NSImage, NSImageView, NSAppearance,
+)
+from Foundation import NSOperationQueue
+from AVFoundation import (
+    AVCaptureDevice, AVMediaTypeVideo,
+    AVAuthorizationStatusAuthorized,
+    AVAuthorizationStatusNotDetermined,
 )
 
 W = 520
 H_WELCOME = 520
-H_PREP    = 560
+H_PREP    = 580
 H_DONE    = 460
 
 _IMAGE_DIR = pathlib.Path(__file__).parent.parent / "image"
 
 _refs = []
+
+
+def _camera_authorized():
+    status = AVCaptureDevice.authorizationStatusForMediaType_(AVMediaTypeVideo)
+    return status == AVAuthorizationStatusAuthorized
+
+
+def request_camera_permission(callback=None):
+    status = AVCaptureDevice.authorizationStatusForMediaType_(AVMediaTypeVideo)
+    if status == AVAuthorizationStatusNotDetermined:
+        AVCaptureDevice.requestAccessForMediaType_completionHandler_(
+            AVMediaTypeVideo,
+            lambda granted: (callback(granted) if callback else None),
+        )
+    else:
+        if callback:
+            callback(status == AVAuthorizationStatusAuthorized)
 
 
 # ── 뷰 헬퍼 ──────────────────────────────────────────────────────────
@@ -30,10 +53,9 @@ def _label(text, x, y, w, h, size=13, bold=False,
     f.setFont_(NSFont.boldSystemFontOfSize_(size) if bold
                else NSFont.systemFontOfSize_(size))
     f.setAlignment_(align)
-    f.cell().setWraps_(True)          # 자동 줄바꿈
-    f.cell().setLineBreakMode_(0)     # NSLineBreakByWordWrapping
-    if color:
-        f.setTextColor_(color)
+    f.cell().setWraps_(True)
+    f.cell().setLineBreakMode_(0)
+    f.setTextColor_(color if color else NSColor.blackColor())
     return f
 
 
@@ -41,14 +63,16 @@ def _image_view(filename, x, y, w, h):
     img = NSImage.alloc().initWithContentsOfFile_(str(_IMAGE_DIR / filename))
     view = NSImageView.alloc().initWithFrame_(NSMakeRect(x, y, w, h))
     view.setImage_(img)
-    view.setImageScaling_(3)  # NSImageScaleProportionallyUpOrDown
+    view.setImageScaling_(3)
     return view
 
 
 def _sep(y):
     v = NSView.alloc().initWithFrame_(NSMakeRect(40, y, W - 80, 1))
     v.setWantsLayer_(True)
-    v.layer().setBackgroundColor_(NSColor.separatorColor().CGColor())
+    v.layer().setBackgroundColor_(
+        NSColor.colorWithRed_green_blue_alpha_(0.8, 0.8, 0.8, 1.0).CGColor()
+    )
     return v
 
 
@@ -77,12 +101,13 @@ class _Delegate(NSObject):
         self.owner = None
         return self
 
-    def goToCalibPrep_(self, _):  self.owner.show_calib_prep()
-    def goToWelcome_(self, _):    self.owner._show_welcome()
-    def beginCalib_(self, _):     self.owner._run_calibration()
-    def restartCalib_(self, _):   self.owner.show_calib_prep()
-    def startTracking_(self, _):  self.owner._run_start_tracking()
-    def closeWin_(self, _):       self.owner._close()
+    def goToCalibPrep_(self, _):   self.owner.show_calib_prep()
+    def goToWelcome_(self, _):     self.owner._show_welcome()
+    def beginCalib_(self, _):      self.owner._run_calibration()
+    def restartCalib_(self, _):    self.owner.show_calib_prep()
+    def startTracking_(self, _):   self.owner._run_start_tracking()
+    def closeWin_(self, _):        self.owner._close()
+    def requestCamera_(self, _):   self.owner._request_camera()
 
 
 # ── 창 클래스 ─────────────────────────────────────────────────────────
@@ -97,6 +122,10 @@ class OnboardingWindow:
         self._dlg.owner = self
         _refs.extend([self._win, self._dlg])
 
+        # 앱 시작 시 카메라 권한 미리 요청 — 허용하면 메인 스레드에서 화면 갱신
+        def _on_permission(granted):
+            NSOperationQueue.mainQueue().addOperationWithBlock_(self._show_welcome)
+        request_camera_permission(callback=_on_permission)
         self._show_welcome()
 
     def _make_win(self, h):
@@ -107,6 +136,8 @@ class OnboardingWindow:
             NSMakeRect(sx, sy, W, h), 1 | 2, NSBackingStoreBuffered, False
         )
         win.setTitle_("Folleye")
+        win.setBackgroundColor_(NSColor.whiteColor())
+        win.setAppearance_(NSAppearance.appearanceNamed_("NSAppearanceNameAqua"))
         win.setReleasedWhenClosed_(False)
         return win
 
@@ -130,9 +161,8 @@ class OnboardingWindow:
     def _show_welcome(self):
         self._resize(H_WELCOME)
         self._clear()
-        c, g, P = self._win.contentView(), NSColor.secondaryLabelColor(), 44
+        c, g, P = self._win.contentView(), NSColor.darkGrayColor(), 44
 
-        # logo_right.png: w=253 h=77, 수평 중앙, 28px top padding
         c.addSubview_(_image_view("logo_right.png", 133, 415, 253, 77))
 
         c.addSubview_(_label(
@@ -153,6 +183,13 @@ class OnboardingWindow:
             P, 83, W-P*2, 100, size=12, color=g,
         ))
 
+        # 카메라 권한 상태
+        authorized = _camera_authorized()
+        cam_text  = "✅  Camera access granted" if authorized else "❌  Camera access not granted — open System Settings to enable"
+        cam_color = NSColor.colorWithRed_green_blue_alpha_(0.2, 0.6, 0.2, 1.0) if authorized \
+                    else NSColor.colorWithRed_green_blue_alpha_(0.8, 0.1, 0.1, 1.0)
+        c.addSubview_(_label(cam_text, P, 68, W-P*2, 20, size=12, color=cam_color))
+
         for b in _centered_buttons([
             ("Start Calibration", 160, "goToCalibPrep:"),
             ("Later", 90, "closeWin:"),
@@ -161,30 +198,30 @@ class OnboardingWindow:
 
         self._show()
 
-    # ── Screen 2 : Calibration Prep (H=560) ──────────────────────────
+    # ── Screen 2 : Calibration Prep (H=580) ──────────────────────────
 
     def show_calib_prep(self):
         self._resize(H_PREP)
         self._clear()
-        c, g, P = self._win.contentView(), NSColor.secondaryLabelColor(), 44
+        c, g, P = self._win.contentView(), NSColor.darkGrayColor(), 44
 
-        c.addSubview_(_label("Before You Start", 0, 500, W, 44,
+        c.addSubview_(_label("Before You Start", 0, 520, W, 44,
                              size=22, bold=True, align=NSTextAlignmentCenter))
         c.addSubview_(_label(
             "Follow these tips for the best calibration results.",
-            0, 462, W, 24, size=13, align=NSTextAlignmentCenter, color=g,
+            0, 482, W, 24, size=13, align=NSTextAlignmentCenter, color=g,
         ))
-        c.addSubview_(_sep(446))
+        c.addSubview_(_sep(466))
 
         tips = [
-            (406, "💺  Sit comfortably",
-             358, "Stay in a natural, stable posture throughout the session. Avoid leaning forward or tilting your head."),
-            (318, "👀  Eyes only",
-             270, "Move only your eyes to follow each dot — not your head. Keep your face pointed toward the screen."),
-            (230, "🟢  Wait for green",
-             182, "Each dot starts red and turns green when your gaze is recorded. Stay focused on the dot until it changes color."),
-            (142, "🔁  Recalibrate anytime",
-              94, "If tracking drifts later, redo calibration from the menu bar icon — it takes about 30 seconds."),
+            (426, "💺  Sit comfortably",
+             378, "Stay in a natural, stable posture throughout the session. Avoid leaning forward or tilting your head."),
+            (338, "👀  Eyes only",
+             290, "Move only your eyes to follow each dot — not your head. Keep your face pointed toward the screen."),
+            (250, "🟢  Wait for green",
+             202, "Each dot starts red and turns green when your gaze is recorded. Stay focused on the dot until it changes color."),
+            (162, "🔁  Recalibrate anytime",
+             114, "If tracking drifts later, redo calibration from the menu bar icon — it takes about 30 seconds."),
         ]
         for ty, tt, dy, dt in tips:
             c.addSubview_(_label(tt, P, ty, W-P*2, 22, size=13, bold=True))
@@ -203,7 +240,7 @@ class OnboardingWindow:
     def show_complete(self):
         self._resize(H_DONE)
         self._clear()
-        c, g, P = self._win.contentView(), NSColor.secondaryLabelColor(), 44
+        c, g, P = self._win.contentView(), NSColor.darkGrayColor(), 44
 
         c.addSubview_(_label("Calibration Complete  ✅", 0, 368, W, 44,
                              size=22, bold=True, align=NSTextAlignmentCenter))
@@ -229,6 +266,10 @@ class OnboardingWindow:
         self._show()
 
     # ── 액션 ──────────────────────────────────────────────────────────
+
+    def _request_camera(self):
+        import subprocess
+        subprocess.Popen(["open", "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera"])
 
     def _run_calibration(self):
         self._win.orderOut_(None)

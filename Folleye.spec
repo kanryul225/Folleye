@@ -11,7 +11,7 @@ a = Analysis(
         ('resources', 'resources'),
     ],
     hiddenimports=[
-        'objc', 'Cocoa', 'AppKit', 'Foundation', 'Quartz',
+        'objc', 'Cocoa', 'AppKit', 'Foundation', 'Quartz', 'AVFoundation',
         'cv2', 'mediapipe', 'numpy',
         'app.menubar', 'app.onboarding', 'app.overlay',
         'app.gaze_engine', 'app.calibration', 'app.windows', 'app.utils',
