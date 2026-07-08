@@ -20,3 +20,8 @@ models/L2CSNet/
 .DS_Store
 .claude/
 test/
+
+# Build artifacts
+build/
+dist/
+*.dmg

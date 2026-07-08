@@ -6,6 +6,18 @@
 
 ---
 
+## Download
+
+**[⬇ Download Folleye.dmg (v1.0.0)](https://github.com/kanryul225/Folleye/releases/latest)**
+
+1. Open the downloaded DMG
+2. Drag **Folleye.app** into the Applications folder
+3. Launch from Applications — the Folleye icon appears in your menubar
+
+> **First launch:** macOS may show a security warning since the app isn't notarized. Go to **System Settings → Privacy & Security** and click **Open Anyway**.
+
+---
+
 ## How it works
 
 1. **Calibrate** — follow a series of dots on screen with your eyes (~30 seconds). Folleye learns your personal gaze pattern using MediaPipe face blendshapes.
