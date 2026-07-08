@@ -21,7 +21,7 @@ a = Analysis(
     runtime_hooks=[],
     excludes=[
         'torch', 'torchvision', 'torchaudio',
-        'scipy', 'pandas', 'matplotlib', 'sympy',
+        'scipy', 'pandas', 'sympy',
         'sklearn', 'skimage',
         'IPython', 'jupyter', 'notebook',
         'tensorflow', 'keras',

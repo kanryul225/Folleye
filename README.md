@@ -14,7 +14,11 @@
 2. Drag **Folleye.app** into the Applications folder
 3. Launch from Applications — the Folleye icon appears in your menubar
 
-> **First launch:** macOS may show a security warning since the app isn't notarized. Go to **System Settings → Privacy & Security** and click **Open Anyway**.
+> **First launch — Gatekeeper warning:** Since the app isn't notarized, macOS may block it.
+> - **Option 1 (easiest):** Right-click `Folleye.app` → **Open** → click **Open** in the dialog
+> - **Option 2:** System Settings → Privacy & Security → scroll down → click **Open Anyway**
+>
+> You only need to do this once.
 
 ---
 
