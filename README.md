@@ -2,10 +2,7 @@
 
 **Folleye** is a macOS menubar app that uses your eye gaze to automatically route scroll input to whichever window you're looking at — no mouse movement required.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="image/logo_right_light.png">
-  <img src="image/logo_right.png" alt="Folleye logo" width="320">
-</picture>
+![Folleye logo](image/logo_right_light.png)
 
 ---
 
