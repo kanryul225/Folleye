@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+env/
+*.egg-info/
+
+# Calibration data (personal, per-machine)
+calibration.json
+
+# Large / unused model files
+models/L2CSNet_gaze360.pkl
+models/L2CSNet/
+
+# macOS
+.DS_Store
+.claude/
