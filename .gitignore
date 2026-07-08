@@ -19,3 +19,4 @@ models/L2CSNet/
 # macOS
 .DS_Store
 .claude/
+test/
