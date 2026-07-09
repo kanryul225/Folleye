@@ -45,7 +45,7 @@ Tracking never interrupts normal mouse use — if you move the mouse yourself, F
 
 ## Requirements
 
-- macOS (Apple Silicon or Intel)
+- macOS (Apple Silicon)
 - Python 3.9+
 - A webcam
 
@@ -63,7 +63,7 @@ python3 -m venv venv
 source venv/bin/activate
 
 # 3. Install dependencies
-pip install mediapipe==0.10.9 opencv-python numpy pyobjc-framework-Cocoa
+pip install mediapipe==0.10.9 opencv-python numpy pyobjc-framework-Cocoa pyobjc-framework-AVFoundation
 
 # 4. Download the MediaPipe face landmarker model
 curl -L -o resources/face_landmarker.task \
